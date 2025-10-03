@@ -1,0 +1,12 @@
+@base_url=http://localhost:8009
+@total_data=1000000
+### get all
+GET {{base_url}}/conditions/list
+
+### delete all
+DELETE {{base_url}}/conditions/delete
+
+### generate
+GET {{base_url}}/conditions/generate/{{total_data}}
+
+

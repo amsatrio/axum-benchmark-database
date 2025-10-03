@@ -1,0 +1,7 @@
+@base_url=http://localhost:8009
+
+###
+GET {{base_url}}/
+
+###
+GET {{base_url}}/health
