@@ -1,0 +1,16 @@
+@base_url=http://localhost:8009
+@total_data=100
+### get all
+GET {{base_url}}/conditions_diesel/benchmark/list
+
+### delete all
+DELETE {{base_url}}/conditions_diesel/benchmark/delete
+
+### generate
+GET {{base_url}}/conditions_diesel/benchmark/generate/{{total_data}}
+
+
+
+### =======
+###
+GET {{base_url}}/conditions_diesel/crud/list

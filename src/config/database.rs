@@ -33,3 +33,16 @@ pub fn get_tokio_postgres_db_pool() -> deadpool_postgres::Pool {
 
     pool
 }
+
+pub async fn get_tokio_postgresql() -> Result<tokio_postgres::Client, tokio_postgres::Error> {
+    let config_env = &CONFIG;
+    let database_url = config_env.get_database_url();
+    let (client, connection) = tokio_postgres::connect(&database_url, NoTls).await?;
+
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("database connection error: {}", e);
+        }
+    });
+    return Ok(client);
+}

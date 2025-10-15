@@ -4,19 +4,21 @@ use axum::{Extension, Json, Router, http::StatusCode, routing::get};
 use axum_benchmark_database::{
     config::{self, environment::CONFIG},
     dto::{app_error::AppError, app_response::AppResponse},
-    modules::{conditions},
+    modules::{conditions, conditions_diesel},
     state::AppState,
 };
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::Mutex};
 
 #[tokio::main]
 async fn main() {
     let diesel_pool = config::database::get_diesel_postgres_db_pool();
     let deadpool_postgres_pool = config::database::get_tokio_postgres_db_pool();
+    let tokio_postgres_client = config::database::get_tokio_postgresql().await.unwrap();
 
     let state = AppState {
         diesel_pool_pg: Arc::new(diesel_pool),
         pool_pg: deadpool_postgres_pool,
+        tokio_postgres_client: Mutex::new(tokio_postgres_client),
         status: "up".to_string(),
     };
     let shared_state = Arc::new(state);
@@ -24,7 +26,10 @@ async fn main() {
     let app = Router::new()
         .route("/", get(root))
         .route("/health", get(health_check))
-        .nest("/conditions", conditions::controller::new())
+        .nest("/conditions/benchmark", conditions::controller_benchmark::new())
+        .nest("/conditions/crud", conditions::controller_crud::new())
+        .nest("/conditions_diesel/benchmark", conditions_diesel::controller_benchmark::new())
+        .nest("/conditions_diesel/crud", conditions_diesel::controller_crud::new())
         .layer(Extension(shared_state));
 
     let config_env = &CONFIG;

@@ -1,7 +1,11 @@
+use diesel::prelude::Insertable;
+use diesel::QueryableByName;
 use uuid::Uuid;
 use validator::Validate;
 use crate::util::serializer::{date_serializer};
+use crate::schema::{conditions};
 use chrono::NaiveDateTime;
+use diesel::{prelude::Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -9,8 +13,12 @@ use serde::{Deserialize, Serialize};
     Deserialize,
     Serialize,
     Clone,
-    PartialEq,
+    Queryable, Selectable, PartialEq,
+    QueryableByName,
+    Insertable
 )]
+#[diesel(table_name = conditions)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Conditions {
     pub id: String,
     #[serde(with = "date_serializer")]
@@ -47,6 +55,8 @@ impl Conditions {
 }
 
 
+#[derive(QueryableByName)]
 pub struct CountResult {
+    #[diesel(sql_type = diesel::sql_types::BigInt)]
     pub count: i64,
 }
