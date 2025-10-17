@@ -1,16 +1,10 @@
-use uuid::Uuid;
-use validator::Validate;
-use crate::util::serializer::{date_serializer};
+use crate::util::serializer::date_serializer;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use validator::Validate;
 
-#[derive(
-    Debug,
-    Deserialize,
-    Serialize,
-    Clone,
-    PartialEq,
-)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Conditions {
     pub id: String,
     #[serde(with = "date_serializer")]
@@ -32,9 +26,17 @@ pub struct ConditionsRequest {
 impl Conditions {
     pub fn from_create_request(request: ConditionsRequest) -> Self {
         let date_now = chrono::Utc::now().naive_utc();
-        let new_uuid = Uuid::new_v4();
 
-        Conditions { id: new_uuid.to_string(), created_on: date_now, location: request.location, temperature: request.temperature, humidity: request.humidity }
+        let new_uuid = Uuid::new_v4();
+        let id = request.id.unwrap_or(new_uuid.to_string());
+
+        Conditions {
+            id: id,
+            created_on: date_now,
+            location: request.location,
+            temperature: request.temperature,
+            humidity: request.humidity,
+        }
     }
 
     pub fn from_update_request(request: ConditionsRequest, mut existing: Conditions) -> Self {
@@ -45,7 +47,6 @@ impl Conditions {
         existing
     }
 }
-
 
 pub struct CountResult {
     pub count: i64,

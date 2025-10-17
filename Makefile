@@ -1,4 +1,5 @@
-
+start:
+	cargo run
 diesel_down:
 	diesel migration run
 diesel_up:

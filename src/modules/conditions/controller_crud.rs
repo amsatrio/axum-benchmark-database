@@ -1,10 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-    Extension, Json, Router,
-    extract::Path,
-    http::StatusCode,
-    routing::{delete, get, post, put},
+    extract::Path, http::StatusCode, routing::{delete, get, post, put}, Extension, Json, Router
 };
 use validator::Validate;
 
@@ -14,15 +11,14 @@ use crate::{
         repository,
         schema::{Conditions, ConditionsRequest},
     },
-    state::AppState,
-    util,
+    state::AppState
 };
 
 pub fn new() -> Router {
     Router::new()
         .route("/list", get(find_all))
         .route("/", post(create))
-        // .route("/", put(update))
+        .route("/", put(update))
         .route("/{id}", delete(delete_by_id))
         .route("/{id}", get(find_by_id))
 }
@@ -98,6 +94,36 @@ pub async fn create(
     }
 
     let _ = repository::insert_one(&mut client, new_conditions).await?;
+
+    let status_code = StatusCode::OK;
+    return Ok((status_code, Json(AppResponse::ok("success", None))));
+}
+
+
+pub async fn update(
+    Extension(_state): Extension<Arc<AppState>>,
+    Json(conditions_request): Json<ConditionsRequest>,
+) -> Result<(StatusCode, Json<AppResponse<String>>), AppError> {
+    let _is_valid = match conditions_request.validate() {
+        Ok(value) => value,
+        Err(error) => {
+            return Err(AppError::InvalidRequest(error).into());
+        }
+    };
+    if conditions_request.id.is_none() {
+        return Err(AppError::Other(format!("invalid id")));
+    }
+
+    let mut client = _state.tokio_postgres_client.lock().await;
+
+    let _result = repository::find_by_id(&client, conditions_request.id.clone().unwrap()).await;
+    if _result.is_err() {
+        return Err(_result.err().unwrap());
+    }
+
+    let new_conditions = Conditions::from_update_request(conditions_request, _result.unwrap());
+
+    let _ = repository::update_one(&mut client, new_conditions).await?;
 
     let status_code = StatusCode::OK;
     return Ok((status_code, Json(AppResponse::ok("success", None))));

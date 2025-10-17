@@ -35,14 +35,16 @@ pub async fn find_all(
     for _ in 0..10 {
         let start = Instant::now();
 
-        let _result: Vec<Conditions> = repository::find_all(&client).await?;
-
+        let mut _result: Vec<Conditions> = repository::find_all(&client).await?;
+        
         let duration = start.elapsed();
         if durations.len() == 0 {
             durations = format!("{}", duration.as_millis());
             continue;
         }
         durations = format!("{},{}", durations, duration.as_millis());
+
+        _result.clear();
     }
 
     let status_code = StatusCode::OK;
@@ -91,8 +93,8 @@ pub async fn generate(
             let new_conditions = Conditions::from_create_request(_conditions_request);
             conditions_list.push(new_conditions);
 
-            if conditions_list.len() == 1000 {
-                let _result = repository::insert_all(&mut client, conditions_list.clone()).await;
+            if conditions_list.len() == 100000 {
+                let _result = repository::insert_batch(&mut client, conditions_list.clone()).await;
                 conditions_list.clear();
                 continue;
             }
@@ -100,8 +102,7 @@ pub async fn generate(
                 continue;
             }
 
-            println!("conditions_list size: {}", conditions_list.len());
-            let _result = repository::insert_all(&mut client, conditions_list.clone()).await;
+            let _result = repository::insert_batch(&mut client, conditions_list.clone()).await;
             conditions_list.clear();
         }
         let duration = start.elapsed();

@@ -1,5 +1,5 @@
 base_url=http://localhost:8009
-total_data=1
+total_data=100000
 id=dbca23a3-5130-49d9-bcba-1cada288a84b
 
 # main

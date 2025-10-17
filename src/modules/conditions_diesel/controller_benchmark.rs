@@ -155,7 +155,6 @@ pub async fn generate(
                 continue;
             }
     
-            // println!("conditions_list size: {}", conditions_list.len());
             let _result = repository::create_bacth(&mut db_conn, conditions_list.clone());
             conditions_list.clear();
         }
