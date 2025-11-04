@@ -4,7 +4,7 @@ use axum::{Extension, Json, Router, http::StatusCode, routing::get};
 use axum_benchmark_database::{
     config::{self, environment::CONFIG},
     dto::{app_error::AppError, app_response::AppResponse},
-    modules::{conditions, conditions_diesel},
+    modules::{conditions, conditions_diesel, conditions_kafka},
     state::AppState,
 };
 use tokio::{net::TcpListener, sync::Mutex};
@@ -30,6 +30,8 @@ async fn main() {
         .nest("/conditions/crud", conditions::controller_crud::new())
         .nest("/conditions_diesel/benchmark", conditions_diesel::controller_benchmark::new())
         .nest("/conditions_diesel/crud", conditions_diesel::controller_crud::new())
+        .nest("/conditions_kafka", conditions_kafka::controller::new())
+        .nest("/conditions_kafka/benchmark", conditions_kafka::controller_benchmark::new())
         .layer(Extension(shared_state));
 
     let config_env = &CONFIG;
