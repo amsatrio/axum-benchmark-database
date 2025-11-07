@@ -55,3 +55,8 @@ curl --location "{{base_url}}/conditions_kafka/consumer" -X GET -i
 curl --location "{{base_url}}/conditions_kafka/benchmark/producer/{{total_data}}" -X GET -i
 ### consumer
 curl --location "{{base_url}}/conditions_kafka/benchmark/consumer" -X GET -i
+
+
+# tiberius crud
+### all
+curl --location "{{base_url}}/conditions_tiberius/crud/list" -X GET -i

@@ -4,7 +4,7 @@ use axum::{Extension, Json, Router, http::StatusCode, routing::get};
 use axum_benchmark_database::{
     config::{self, environment::CONFIG},
     dto::{app_error::AppError, app_response::AppResponse},
-    modules::{conditions, conditions_diesel, conditions_kafka},
+    modules::{conditions, conditions_diesel, conditions_kafka, conditions_tiberius},
     state::AppState,
 };
 use tokio::{net::TcpListener, sync::Mutex};
@@ -14,11 +14,13 @@ async fn main() {
     let diesel_pool = config::database::get_diesel_postgres_db_pool();
     let deadpool_postgres_pool = config::database::get_tokio_postgres_db_pool();
     let tokio_postgres_client = config::database::get_tokio_postgresql().await.unwrap();
+    let tiberius_client = config::database::get_tiberius_sql_server().await.unwrap();
 
     let state = AppState {
         diesel_pool_pg: Arc::new(diesel_pool),
         pool_pg: deadpool_postgres_pool,
         tokio_postgres_client: Mutex::new(tokio_postgres_client),
+        tiberius_client: Mutex::new(tiberius_client),
         status: "up".to_string(),
     };
     let shared_state = Arc::new(state);
@@ -26,12 +28,23 @@ async fn main() {
     let app = Router::new()
         .route("/", get(root))
         .route("/health", get(health_check))
+
+        // tokio
         .nest("/conditions/benchmark", conditions::controller_benchmark::new())
         .nest("/conditions/crud", conditions::controller_crud::new())
+
+        // diesel
         .nest("/conditions_diesel/benchmark", conditions_diesel::controller_benchmark::new())
         .nest("/conditions_diesel/crud", conditions_diesel::controller_crud::new())
+
+        // kafka
         .nest("/conditions_kafka", conditions_kafka::controller::new())
         .nest("/conditions_kafka/benchmark", conditions_kafka::controller_benchmark::new())
+
+        // tiberius
+        .nest("/conditions_tiberius/crud", conditions_tiberius::controller_crud::new())
+
+        // shared state
         .layer(Extension(shared_state));
 
     let config_env = &CONFIG;
