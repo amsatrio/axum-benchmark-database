@@ -1,5 +1,5 @@
 use crate::util::serializer::date_serializer;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
@@ -45,6 +45,24 @@ impl Conditions {
         existing.temperature = request.temperature;
 
         existing
+    }
+
+    pub fn from_row_tiberius(row: &tiberius::Row) -> Self {
+        let created_on = row
+            .get::<&str, _>("created_on")
+            .and_then(|s| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok())
+            .unwrap_or_else(|| DateTime::from_timestamp(0, 0).unwrap().naive_utc());
+
+        Conditions {
+            id: row.get::<&str, _>("id").unwrap_or_default().to_owned(),
+            created_on: created_on,
+            location: row
+                .get::<&str, _>("location")
+                .unwrap_or_default()
+                .to_owned(),
+            temperature: row.get::<f64, _>("temperature"),
+            humidity: row.get::<f64, _>("id"),
+        }
     }
 }
 

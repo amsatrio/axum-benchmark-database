@@ -51,9 +51,9 @@ pub async fn get_tokio_postgresql() -> Result<tokio_postgres::Client, tokio_post
 
 pub async fn get_tiberius_sql_server() -> Result<tiberius::Client<Compat<TcpStream>>, tiberius::error::Error> {
     let mut config = tiberius::Config::new();
-    config.host("localhost");
+    config.host("dell3050.tailb8a972.ts.net");
     config.port(1433);
-    config.authentication(tiberius::AuthMethod::sql_server("SA", "P@ssw0rd"));
+    config.authentication(tiberius::AuthMethod::sql_server("SA", "auUmc2FutKX5frJad3uVpNM5mnbXhzS53AygPwijprD9qfabKYebggJpJKcWCN9NmQpUf7QM7wFcyg7AWMLhFTdHXy34fX7zvrMjbe9usMnPpAWS9KF779XTEAEQE22s"));
     config.trust_cert();
     
     let tcp = TcpStream::connect(config.get_addr()).await?;

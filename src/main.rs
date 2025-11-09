@@ -43,6 +43,7 @@ async fn main() {
 
         // tiberius
         .nest("/conditions_tiberius/crud", conditions_tiberius::controller_crud::new())
+        .nest("/conditions_tiberius/benchmark", conditions_tiberius::controller_benchmark::new())
 
         // shared state
         .layer(Extension(shared_state));
