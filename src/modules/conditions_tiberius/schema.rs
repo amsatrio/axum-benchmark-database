@@ -1,5 +1,6 @@
 use crate::util::serializer::date_serializer;
-use chrono::{DateTime, NaiveDateTime};
+use chrono::{DateTime, FixedOffset, NaiveDateTime, Utc};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
@@ -38,6 +39,22 @@ impl Conditions {
             humidity: request.humidity,
         }
     }
+    pub fn from_create_request_dummy(request: ConditionsRequest, c: i32) -> Self {
+        let yaer_in_range: i32 = 2020 + (c % 6);
+        let date_string = format!("{}-01-01 01:00:00", yaer_in_range);
+        let date_now = NaiveDateTime::parse_from_str(&date_string, "%Y-%m-%d %H:%M:%S").unwrap();
+
+        let new_uuid = Uuid::new_v4();
+        let id = request.id.unwrap_or(new_uuid.to_string());
+
+        Conditions {
+            id: id,
+            created_on: date_now,
+            location: request.location,
+            temperature: request.temperature,
+            humidity: request.humidity,
+        }
+    }
 
     pub fn from_update_request(request: ConditionsRequest, mut existing: Conditions) -> Self {
         existing.humidity = request.humidity;
@@ -48,20 +65,13 @@ impl Conditions {
     }
 
     pub fn from_row_tiberius(row: &tiberius::Row) -> Self {
-        let created_on = row
-            .get::<&str, _>("created_on")
-            .and_then(|s| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok())
-            .unwrap_or_else(|| DateTime::from_timestamp(0, 0).unwrap().naive_utc());
-
+        let created_on_datetime: DateTime<FixedOffset> = row.get("created_on").unwrap();
         Conditions {
             id: row.get::<&str, _>("id").unwrap_or_default().to_owned(),
-            created_on: created_on,
-            location: row
-                .get::<&str, _>("location")
-                .unwrap_or_default()
-                .to_owned(),
+            created_on: created_on_datetime.with_timezone(&Utc).naive_utc(),
+            location: row.get::<&str, _>("location").unwrap_or_default().to_owned(),
             temperature: row.get::<f64, _>("temperature"),
-            humidity: row.get::<f64, _>("id"),
+            humidity: row.get::<f64, _>("humidity"),
         }
     }
 }

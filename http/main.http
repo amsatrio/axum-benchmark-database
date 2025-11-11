@@ -67,4 +67,6 @@ curl --location "{{base_url}}/conditions_tiberius/benchmark/list" -X GET -i
 ### delete all
 curl --location "{{base_url}}/conditions_tiberius/benchmark/delete" -X DELETE -i
 ### generate
-curl --location "{{base_url}}/conditions_tiberius/benchmark/generate/1000000" -X GET -i
+curl --location "{{base_url}}/conditions_tiberius/benchmark/generate/100000" -X GET -i
+### generate-2
+curl --location "{{base_url}}/conditions_tiberius/benchmark/generate-2/1000000" -X GET -i

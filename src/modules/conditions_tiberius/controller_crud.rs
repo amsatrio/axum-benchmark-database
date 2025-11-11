@@ -22,7 +22,7 @@ pub async fn find_all(
     // get db connection
     let mut client: tokio::sync::MutexGuard<'_, tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>> = _state.tiberius_client.lock().await;
 
-    let _result: Vec<Conditions> = repository::find_all(&mut client).await?;
+    let _result: Vec<Conditions> = repository::find_all_stream(&mut client).await?;
 
     let status_code = StatusCode::OK;
     return Ok((

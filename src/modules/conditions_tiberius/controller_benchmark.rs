@@ -6,6 +6,7 @@ use axum::{
     http::StatusCode,
     routing::{delete, get},
 };
+use chrono::NaiveDateTime;
 use tokio::time::Instant;
 
 use crate::{
@@ -23,6 +24,7 @@ pub fn new() -> Router {
         .route("/list", get(find_all))
         .route("/delete", delete(delete_all))
         .route("/generate/{size}", get(generate))
+        .route("/generate-2/{size}", get(generate2))
 }
 
 pub async fn find_all(
@@ -34,12 +36,21 @@ pub async fn find_all(
         tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>,
     > = _state.tiberius_client.lock().await;
 
-    let _result: Vec<Conditions> = repository::find_all(&mut client).await?;
+    let mut durations = String::new();
+    for _ in 0..10 {
+        let start = Instant::now();
+        let _result: Vec<Conditions> = repository::find_all_stream(&mut client).await?;
+        let duration = start.elapsed();
+        durations = format!("{},{}", durations, duration.as_millis());
+    }
 
     let status_code = StatusCode::OK;
     return Ok((
         status_code,
-        Json(AppResponse::ok(format!("success"), Some(_result))),
+        Json(AppResponse::ok(
+            format!("Time in milliseconds: {} ms", durations),
+            None,
+        )),
     ));
 }
 
@@ -67,7 +78,7 @@ pub async fn generate(
     > = _state.tiberius_client.lock().await;
 
     let mut durations = String::new();
-    for _ in 0..1 {
+    for _ in 0..10 {
         let mut conditions_list: Vec<Conditions> = Vec::new();
         let start = Instant::now();
         for c in 0..size {
@@ -82,7 +93,8 @@ pub async fn generate(
                 temperature: Some(temperature),
                 humidity: Some(humidity),
             };
-            let new_conditions = Conditions::from_create_request(_conditions_request);
+            let mut new_conditions = Conditions::from_create_request(_conditions_request);
+            new_conditions.created_on = NaiveDateTime::parse_from_str("", "%Y-%m-%d %H:%M:%S").unwrap();
             conditions_list.push(new_conditions);
 
             if conditions_list.len() == 400 {
@@ -90,13 +102,10 @@ pub async fn generate(
                 conditions_list.clear();
                 continue;
             }
-            if c < size - 1 {
-                continue;
-            }
-
-            let _result = repository::insert_batch(&mut client, conditions_list.clone()).await;
-            conditions_list.clear();
         }
+        let _result = repository::insert_batch(&mut client, conditions_list.clone()).await;
+        conditions_list.clear();
+
         let duration = start.elapsed();
         if durations.len() == 0 {
             durations = format!("{}", duration.as_millis());
@@ -115,6 +124,9 @@ pub async fn generate(
     ));
 }
 
+
+
+
 pub async fn generate2(
     Path(size): Path<i32>,
     Extension(_state): Extension<Arc<AppState>>,
@@ -124,30 +136,50 @@ pub async fn generate2(
         tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>,
     > = _state.tiberius_client.lock().await;
 
-    let mut conditions_list: Vec<Conditions> = Vec::new();
-    for _c in 0..size {
-        let location =
-            util::generator::generate_word(util::generator::generate_numbers_usize(10, 20));
-        let temperature = util::generator::generate_numbers_f64(27.0, 60.0);
-        let humidity = util::generator::generate_numbers_f64(0.0, 100.0);
+    let mut durations = String::new();
+    for _ in 0..10 {
+        let mut conditions_list: Vec<Conditions> = Vec::new();
+        let start = Instant::now();
+        for c in 0..size {
+            let location =
+                util::generator::generate_word(util::generator::generate_numbers_usize(10, 20));
+            let temperature = util::generator::generate_numbers_f64(27.0, 60.0);
+            let humidity = util::generator::generate_numbers_f64(0.0, 100.0);
 
-        let _conditions_request = ConditionsRequest {
-            id: None,
-            location: location,
-            temperature: Some(temperature),
-            humidity: Some(humidity),
-        };
-        let new_conditions = Conditions::from_create_request(_conditions_request);
-        conditions_list.push(new_conditions);
+            let _conditions_request = ConditionsRequest {
+                id: None,
+                location: location,
+                temperature: Some(temperature),
+                humidity: Some(humidity),
+            };
+            let mut new_conditions = Conditions::from_create_request(_conditions_request);
+            let date_string = format!("202{}-01-01 00:00:00", c%6);
+            new_conditions.created_on = NaiveDateTime::parse_from_str(&date_string, "%Y-%m-%d %H:%M:%S").unwrap();
+            conditions_list.push(new_conditions);
+
+            if conditions_list.len() == 100000 {
+                let _result = repository::insert_batch_2(&mut client, conditions_list.clone()).await?;
+                conditions_list.clear();
+            }
+        }
+        let _result = repository::insert_batch_2(&mut client, conditions_list.clone()).await?;
+        conditions_list.clear();
+
+        let duration = start.elapsed();
+        if durations.len() == 0 {
+            durations = format!("{}", duration.as_millis());
+            continue;
+        }
+        durations = format!("{},{}", durations, duration.as_millis());
     }
-    let _result = repository::insert_batch_2(&mut client, conditions_list.clone()).await;
 
     let status_code = StatusCode::OK;
     return Ok((
         status_code,
         Json(AppResponse::ok(
-            format!("success"),
+            format!("Time in milliseconds: {} ms", durations),
             None,
         )),
     ));
 }
+
