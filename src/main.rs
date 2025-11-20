@@ -4,7 +4,7 @@ use axum::{Extension, Json, Router, http::StatusCode, routing::get};
 use axum_benchmark_database::{
     config::{self, environment::CONFIG},
     dto::{app_error::AppError, app_response::AppResponse},
-    modules::{conditions, conditions_diesel, conditions_kafka, conditions_tiberius, conditions_tiberius_columns, xxcust},
+    modules::{conditions, conditions_diesel, conditions_kafka, conditions_tiberius, conditions_tiberius_columns},
     state::AppState,
 };
 use tokio::{net::TcpListener, sync::Mutex};
@@ -45,9 +45,6 @@ async fn main() {
         .nest("/conditions_tiberius/crud", conditions_tiberius::controller_crud::new())
         .nest("/conditions_tiberius/benchmark", conditions_tiberius::controller_benchmark::new())
         .nest("/conditions_tiberius_column/benchmark", conditions_tiberius_columns::controller_benchmark::new())
-
-        // tiberius xxcust
-        // .nest("/xxcust_tiberius/benchmark", xxcust::controller_benchmark::new())
 
         // shared state
         .layer(Extension(shared_state));
