@@ -7,7 +7,7 @@ use axum::{
     routing::{delete, get},
 };
 use chrono::NaiveDateTime;
-use tokio::time::Instant;
+use tokio::{task::JoinHandle, time::Instant};
 
 use crate::{
     dto::{app_error::AppError, app_response::AppResponse},
@@ -31,10 +31,8 @@ pub async fn find_all(
     Extension(_state): Extension<Arc<AppState>>,
 ) -> Result<(StatusCode, Json<AppResponse<Vec<Conditions>>>), AppError> {
     // get db connection
-    let mut client: tokio::sync::MutexGuard<
-        '_,
-        tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>,
-    > = _state.tiberius_client.lock().await;
+    let pool = _state.pool_tiberius.clone();
+    let mut client: deadpool_tiberius::deadpool::managed::Object<deadpool_tiberius::Manager> = pool.get().await.unwrap();
 
     let mut durations = String::new();
     for _ in 0..10 {
@@ -57,10 +55,8 @@ pub async fn find_all(
 pub async fn delete_all(
     Extension(_state): Extension<Arc<AppState>>,
 ) -> Result<(StatusCode, Json<AppResponse<Vec<Conditions>>>), AppError> {
-    let mut client: tokio::sync::MutexGuard<
-        '_,
-        tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>,
-    > = _state.tiberius_client.lock().await;
+    let pool = _state.pool_tiberius.clone();
+    let mut client: deadpool_tiberius::deadpool::managed::Object<deadpool_tiberius::Manager> = pool.get().await.unwrap();
 
     let _ = repository::delete_all(&mut client).await?;
 
@@ -72,13 +68,11 @@ pub async fn generate(
     Path(size): Path<i32>,
     Extension(_state): Extension<Arc<AppState>>,
 ) -> Result<(StatusCode, Json<AppResponse<String>>), AppError> {
-    let mut client: tokio::sync::MutexGuard<
-        '_,
-        tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>,
-    > = _state.tiberius_client.lock().await;
+    let pool = _state.pool_tiberius.clone();
+    let mut client: deadpool_tiberius::deadpool::managed::Object<deadpool_tiberius::Manager> = pool.get().await.unwrap();
 
     let mut durations = String::new();
-    for _ in 0..10 {
+    for _ in 0..1 {
         let mut conditions_list: Vec<Conditions> = Vec::new();
         let start = Instant::now();
         for c in 0..size {
@@ -94,7 +88,8 @@ pub async fn generate(
                 humidity: Some(humidity),
             };
             let mut new_conditions = Conditions::from_create_request(_conditions_request);
-            new_conditions.created_on = NaiveDateTime::parse_from_str("", "%Y-%m-%d %H:%M:%S").unwrap();
+            let date_string = format!("202{}-01-01 00:00:00", c%6);
+            new_conditions.created_on = NaiveDateTime::parse_from_str(&date_string, "%Y-%m-%d %H:%M:%S").unwrap();
             conditions_list.push(new_conditions);
 
             if conditions_list.len() == 400 {
@@ -131,15 +126,15 @@ pub async fn generate2(
     Path(size): Path<i32>,
     Extension(_state): Extension<Arc<AppState>>,
 ) -> Result<(StatusCode, Json<AppResponse<String>>), AppError> {
-    let mut client: tokio::sync::MutexGuard<
-        '_,
-        tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>,
-    > = _state.tiberius_client.lock().await;
+    let client = _state.pool_tiberius.clone();
 
     let mut durations = String::new();
     for _ in 0..10 {
         let mut conditions_list: Vec<Conditions> = Vec::new();
         let start = Instant::now();
+
+        let mut join_handlers: Vec<JoinHandle<Result<(), AppError>>> = Vec::new();
+
         for c in 0..size {
             let location =
                 util::generator::generate_word(util::generator::generate_numbers_usize(10, 20));
@@ -158,11 +153,16 @@ pub async fn generate2(
             conditions_list.push(new_conditions);
 
             if conditions_list.len() == 100000 {
-                let _result = repository::insert_batch_2(&mut client, conditions_list.clone()).await?;
+                let condition_thread = conditions_list.clone();
+                let mut client_thread = client.get().await.unwrap();
+                join_handlers.push(tokio::spawn(async move {
+                    return repository::insert_batch_2(&mut client_thread, condition_thread).await;
+                }));
                 conditions_list.clear();
             }
         }
-        let _result = repository::insert_batch_2(&mut client, conditions_list.clone()).await?;
+        let mut client_thread = client.get().await.unwrap();
+        let _result = repository::insert_batch_2(&mut client_thread, conditions_list.clone()).await?;
         conditions_list.clear();
 
         let duration = start.elapsed();

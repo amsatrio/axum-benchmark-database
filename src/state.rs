@@ -8,6 +8,6 @@ pub struct AppState {
     pub diesel_pool_pg: Arc<r2d2::Pool<r2d2::ConnectionManager<PgConnection>>>,
     pub pool_pg: deadpool_postgres::Pool,
     pub tokio_postgres_client: Mutex<tokio_postgres::Client>,
-    pub tiberius_client: Mutex<tiberius::Client<Compat<TcpStream>>>,
+    pub pool_tiberius: deadpool_tiberius::Pool,
     pub status: String
 }

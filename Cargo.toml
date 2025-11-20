@@ -32,5 +32,7 @@ tempfile = "3.23.0"
 rayon = "1.11.0"
 
 rdkafka = { version = "0.38", features = ["tokio"] }
-tiberius = {version = "0.12.3", features = ["chrono"]}
+tiberius = {version = "0.12.2", features = ["chrono", "rust_decimal", "time"]}
 tokio-util = {version = "0.7.17", features = ["compat"]}
+deadpool-tiberius = "0.1.9"
+rust_decimal = {version = "1.39.0", features = ["std", "serde"]}

@@ -43,7 +43,7 @@ pub async fn producer(
 
     let mut durations = String::new();
 
-    for i in 0..10 {
+    for _i in 0..10 {
         let start = Instant::now();
         let mut conditions_list: Vec<Conditions> = Vec::new();
         for c in 0..size {

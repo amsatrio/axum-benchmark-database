@@ -20,7 +20,9 @@ pub async fn find_all(
     Extension(_state): Extension<Arc<AppState>>,
 ) -> Result<(StatusCode, Json<AppResponse<Vec<Conditions>>>), AppError> {
     // get db connection
-    let mut client: tokio::sync::MutexGuard<'_, tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>> = _state.tiberius_client.lock().await;
+    let pool = _state.pool_tiberius.clone();
+    let mut client: deadpool_tiberius::deadpool::managed::Object<deadpool_tiberius::Manager> = pool.get().await.unwrap();
+
 
     let _result: Vec<Conditions> = repository::find_all_stream(&mut client).await?;
 
@@ -38,7 +40,9 @@ pub async fn delete_by_id(
     Path(id): Path<String>,
     Extension(_state): Extension<Arc<AppState>>,
 ) -> Result<(StatusCode, Json<AppResponse<Vec<Conditions>>>), AppError> {
-    let mut client: tokio::sync::MutexGuard<'_, tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>> = _state.tiberius_client.lock().await;
+
+    let pool = _state.pool_tiberius.clone();
+    let mut client: deadpool_tiberius::deadpool::managed::Object<deadpool_tiberius::Manager> = pool.get().await.unwrap();
 
     let _ = repository::delete_by_id(&mut client, id).await?;
 

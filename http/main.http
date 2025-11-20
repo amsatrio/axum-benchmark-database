@@ -1,5 +1,5 @@
 @base_url=http://localhost:8009
-@total_data=1000000
+@total_data=10
 @id=dbca23a3-5130-49d9-bcba-1cada288a84b
 
 # main
@@ -67,6 +67,25 @@ curl --location "{{base_url}}/conditions_tiberius/benchmark/list" -X GET -i
 ### delete all
 curl --location "{{base_url}}/conditions_tiberius/benchmark/delete" -X DELETE -i
 ### generate
-curl --location "{{base_url}}/conditions_tiberius/benchmark/generate/100000" -X GET -i
+curl --location "{{base_url}}/conditions_tiberius/benchmark/generate/10" -X GET -i
 ### generate-2
-curl --location "{{base_url}}/conditions_tiberius/benchmark/generate-2/1000000" -X GET -i
+curl --location "{{base_url}}/conditions_tiberius/benchmark/generate-2/10" -X GET -i
+
+
+
+
+# tiberius column
+### benchmark
+curl --location "{{base_url}}/conditions_tiberius_column/benchmark/list" -X GET -i
+### generate
+curl --location "{{base_url}}/conditions_tiberius_column/benchmark/generate/100000" -X GET -i
+
+
+
+
+# tiberius column xxcust
+## benchmark
+### list
+curl --location "{{base_url}}/xxcust_tiberius/benchmark/list" -X GET -i
+### generate
+curl --location "{{base_url}}/xxcust_tiberius/benchmark/generate/1" -X GET -i

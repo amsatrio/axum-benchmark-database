@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 use diesel::{PgConnection, r2d2};
 use tokio::net::TcpStream;
@@ -49,16 +51,20 @@ pub async fn get_tokio_postgresql() -> Result<tokio_postgres::Client, tokio_post
     return Ok(client);
 }
 
-pub async fn get_tiberius_sql_server() -> Result<tiberius::Client<Compat<TcpStream>>, tiberius::error::Error> {
-    let mut config = tiberius::Config::new();
-    config.host("localhost");
-    config.port(1433);
-    config.authentication(tiberius::AuthMethod::sql_server("SA", "P@ssw0rd"));
-    config.trust_cert();
-    
-    let tcp = TcpStream::connect(config.get_addr()).await?;
-    tcp.set_nodelay(true)?;
-    let client = tiberius::Client::connect(config, tcp.compat_write()).await?;
+pub fn get_deadpool_tiberius_sql_server_db_pool() -> deadpool_tiberius::Pool {
+    let pool = deadpool_tiberius::Manager::new()
+        .host("localhost")
+        .port(1433)
+        .basic_authentication("sa", "P@ssw0rd")
+        .database("master")
 
-    return Ok(client);
+        .trust_cert()
+        .max_size(17)
+        .wait_timeout(Duration::from_secs(30))  
+        .pre_recycle_sync(|_client, _metrics| {
+            Ok(())
+        })
+        .create_pool();
+
+    pool.unwrap()
 }

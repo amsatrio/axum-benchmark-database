@@ -4,7 +4,7 @@ use axum::{Extension, Json, Router, http::StatusCode, routing::get};
 use axum_benchmark_database::{
     config::{self, environment::CONFIG},
     dto::{app_error::AppError, app_response::AppResponse},
-    modules::{conditions, conditions_diesel, conditions_kafka, conditions_tiberius},
+    modules::{conditions, conditions_diesel, conditions_kafka, conditions_tiberius, conditions_tiberius_columns, xxcust},
     state::AppState,
 };
 use tokio::{net::TcpListener, sync::Mutex};
@@ -14,13 +14,13 @@ async fn main() {
     let diesel_pool = config::database::get_diesel_postgres_db_pool();
     let deadpool_postgres_pool = config::database::get_tokio_postgres_db_pool();
     let tokio_postgres_client = config::database::get_tokio_postgresql().await.unwrap();
-    let tiberius_client = config::database::get_tiberius_sql_server().await.unwrap();
+    let deadpool_tiberius = config::database::get_deadpool_tiberius_sql_server_db_pool();
 
     let state = AppState {
         diesel_pool_pg: Arc::new(diesel_pool),
         pool_pg: deadpool_postgres_pool,
         tokio_postgres_client: Mutex::new(tokio_postgres_client),
-        tiberius_client: Mutex::new(tiberius_client),
+        pool_tiberius: deadpool_tiberius,
         status: "up".to_string(),
     };
     let shared_state = Arc::new(state);
@@ -44,6 +44,10 @@ async fn main() {
         // tiberius
         .nest("/conditions_tiberius/crud", conditions_tiberius::controller_crud::new())
         .nest("/conditions_tiberius/benchmark", conditions_tiberius::controller_benchmark::new())
+        .nest("/conditions_tiberius_column/benchmark", conditions_tiberius_columns::controller_benchmark::new())
+
+        // tiberius xxcust
+        // .nest("/xxcust_tiberius/benchmark", xxcust::controller_benchmark::new())
 
         // shared state
         .layer(Extension(shared_state));

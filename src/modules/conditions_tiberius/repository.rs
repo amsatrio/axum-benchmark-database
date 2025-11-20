@@ -92,16 +92,8 @@ pub async fn insert_batch(
         params.push(Box::new(condition.id.clone()));
         params.push(Box::new(condition.created_on));
         params.push(Box::new(condition.location.clone()));
-        params.push(Box::new(
-            condition
-                .temperature
-                .as_ref()
-                .map(|v| *v)
-                .unwrap_or_default(),
-        ));
-        params.push(Box::new(
-            condition.humidity.as_ref().map(|v| *v).unwrap_or_default(),
-        ));
+        params.push(Box::new(condition.temperature));
+        params.push(Box::new(condition.humidity));
     }
 
     query.truncate(query.len() - 2);
@@ -119,35 +111,17 @@ pub async fn insert_batch_2(
     client: &mut tiberius::Client<tokio_util::compat::Compat<tokio::net::TcpStream>>,
     data: Vec<Conditions>,
 ) -> Result<(), AppError> {
-    // println!("insert_batch_2");
-    // println!("{}", data.len());
     let mut bulk_insert = client
         .bulk_insert("master.dbo.conditions")
         .await
         .map_err(|err| AppError::Other(format!("{:?}", err)))?;
 
-    // println!("bulk_insert await success");
-
-    // let mut params: Vec<Box<dyn ToSql>> = Vec::new();
     for condition in &data {
-        let new_row = (
-            Some(condition.id.clone()),
-            Some(condition.created_on),
-            Some(condition.location.clone()),
-            condition.temperature,
-            condition.humidity,
-        )
-            .into_row();
-        // println!("{}", condition.id.clone());
         bulk_insert
-            .send(new_row)
+            .send(Conditions::to_tiberius_row(condition))
             .await
             .map_err(|err| AppError::Other(format!("{:?}", err)))?;
     }
-
-    // println!("bulk_insert for loop success");
-
-    // let params_slice: Vec<&dyn tiberius::ToSql> = params.iter().map(|p| p.as_ref()).collect();
 
     let res = bulk_insert
         .finalize()

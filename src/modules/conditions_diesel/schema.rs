@@ -2,7 +2,7 @@ use diesel::prelude::Insertable;
 use diesel::QueryableByName;
 use uuid::Uuid;
 use validator::Validate;
-use crate::util::serializer::{date_serializer};
+use crate::util::serializer::{datetime_serializer};
 use crate::schema::{conditions};
 use chrono::NaiveDateTime;
 use diesel::{prelude::Queryable, Selectable};
@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Conditions {
     pub id: String,
-    #[serde(with = "date_serializer")]
+    #[serde(with = "datetime_serializer")]
     pub created_on: NaiveDateTime,
     pub location: String,
     pub temperature: Option<f64>,

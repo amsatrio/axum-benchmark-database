@@ -1,14 +1,14 @@
-use crate::util::serializer::date_serializer;
+use crate::util::serializer::datetime_serializer;
 use chrono::{DateTime, FixedOffset, NaiveDateTime, Utc};
-use rand::Rng;
 use serde::{Deserialize, Serialize};
+use tiberius::{IntoRow, numeric::Decimal};
 use uuid::Uuid;
 use validator::Validate;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Conditions {
     pub id: String,
-    #[serde(with = "date_serializer")]
+    #[serde(with = "datetime_serializer")]
     pub created_on: NaiveDateTime,
     pub location: String,
     pub temperature: Option<f64>,
@@ -74,6 +74,15 @@ impl Conditions {
             humidity: row.get::<f64, _>("humidity"),
         }
     }
+    pub fn to_tiberius_row(data: &Self) -> tiberius::TokenRow<'static> {
+		return (
+			Some(data.id.clone()),
+			Some(data.created_on),
+			Some(data.location.clone()),
+			data.temperature,
+			data.humidity
+		).into_row();
+	}
 }
 
 pub struct CountResult {

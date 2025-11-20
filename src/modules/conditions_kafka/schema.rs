@@ -1,4 +1,4 @@
-use crate::util::serializer::date_serializer;
+use crate::util::serializer::datetime_serializer;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -7,7 +7,7 @@ use validator::Validate;
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Conditions {
     pub id: String,
-    #[serde(with = "date_serializer")]
+    #[serde(with = "datetime_serializer")]
     pub created_on: NaiveDateTime,
     pub location: String,
     pub temperature: Option<f64>,
