@@ -163,10 +163,8 @@ CREATE NONCLUSTERED INDEX idx_conditions ON conditions (id,created_on,modified_o
   "message": "Time in milliseconds: 80574,81147,88738,75546,78845,111868,106014,114315,109800,98969 ms",
   "timestamp": "2025-11-19 14:21:11"
 }
-### get 100000 data in table conditions
-```sql
-SELECT * FROM conditions where created_on BETWEEN '2023-01-01' and '2023-12-31'
-```
+### get 166.670 data in table conditions (the table has 1.000.000 data) 
+### (select * from conditions where created_on BETWEEN '2023-01-01' and '2023-12-31')
 {
   "status": 200,
   "message": "Time in milliseconds: ,267989,281870,280286,259919,260654,271253,264189,261361,264065,265223 ms",

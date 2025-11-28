@@ -77,6 +77,8 @@ curl --location "{{base_url}}/conditions_tiberius/benchmark/generate-2/10" -X GE
 # tiberius column
 ### benchmark
 curl --location "{{base_url}}/conditions_tiberius_column/benchmark/list" -X GET -i
+### benchmark page
+curl --location "{{base_url}}/conditions_tiberius_column/benchmark/list_page" -X GET -i
 ### generate
 curl --location "{{base_url}}/conditions_tiberius_column/benchmark/generate/100000" -X GET -i
 

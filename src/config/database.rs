@@ -2,8 +2,6 @@ use std::time::Duration;
 
 use deadpool_postgres::{Config, ManagerConfig, RecyclingMethod, Runtime};
 use diesel::{PgConnection, r2d2};
-use tokio::net::TcpStream;
-use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 use tokio_postgres::NoTls;
 
 use crate::config::environment::CONFIG;
@@ -56,8 +54,7 @@ pub fn get_deadpool_tiberius_sql_server_db_pool() -> deadpool_tiberius::Pool {
         .host("localhost")
         .port(1433)
         .basic_authentication("sa", "P@ssw0rd")
-        .database("master")
-
+        .database("tiberius")
         .trust_cert()
         .max_size(17)
         .wait_timeout(Duration::from_secs(30))  
